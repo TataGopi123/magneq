@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="86114509-5370-4699-af9b-57bb864a27f7" >
+		<http:listener-connection host="0.0.0.0" port="8087" />
+	</http:listener-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="e11fe28d-c1c4-4b04-9ea1-4f4421ebfe8f" >
+		<db:my-sql-connection host="localhost" port="3306" user="root" password="Viratian@1234" database="gopi" />
+	</db:config>
+	<flow name="standlone-deploymentFlow" doc:id="bce027b6-113e-4789-95d9-cfcf12816822" >
+		<http:listener doc:name="Listener" doc:id="de457138-4dee-450a-b6e2-14cdbb4786fa" config-ref="HTTP_Listener_config" path="/mule"/>
+		<db:select doc:name="Select" doc:id="ea524b3c-1790-4be5-9d33-9ea3c9637502" config-ref="Database_Config">
+			<db:sql ><![CDATA[select * from student2;]]></db:sql>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="cdce54ec-c08e-4a64-8b63-7a86469c6b0c" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="standlone-deploymentFlow1" doc:id="880094ba-801c-430f-8a62-e15e776b3356" >
+		<http:listener doc:name="Listener" doc:id="7d4cbce3-22bb-443f-96ba-222fe1a46864" config-ref="HTTP_Listener_config" path="/insert"/>
+		<logger level="INFO" doc:name="Logger" doc:id="5e93f85f-94b9-4750-a1fd-8fe92e3b11ba" message="#[payload]"/>
+		<foreach doc:name="For Each" doc:id="8c14368b-ef1f-4d7e-9a9d-1bc0ccfde2e1" collection="#[payload]">
+			<db:insert doc:name="Insert" doc:id="68e60964-5639-4fad-a670-82e1c230692d" config-ref="Database_Config">
+			<db:sql><![CDATA[insert into demo values (:Id,:Name,:Desg)]]></db:sql>
+			<db:input-parameters><![CDATA[#[{
+	Id: payload.id,
+	Name:payload.name,
+	Desg:payload.desg
+}]]]></db:input-parameters>
+		</db:insert>
+		</foreach>
+		<ee:transform doc:name="Transform Message" doc:id="dd99239c-3c5f-4c69-835a-81b8da44efe8" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="9f6e4fd1-0aff-47be-b1e2-96a54647fd11" />
+	</flow>
+</mule>
